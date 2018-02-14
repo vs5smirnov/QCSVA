@@ -18,7 +18,7 @@
 #define THR_ANDROID_MIN 0
 #define THR_ANDROID_MAX 255
 #define MAX_TILT_THRUST_CORRECTION 1.3 // 30%
-#define MAX_TILT_ANGLE
+#define MAX_TILT_ANGLE 15
 #define PI 3.14159
 
 Servo motor1;             /* Motors (servos), numbering:   1   2   */
@@ -27,7 +27,7 @@ Servo motor3;             /*                                / \    */
 Servo motor4;             /*                               3   4   */
 
 
-char ssid[] = "URWA";     // WiFi
+char ssid[] = "PUT YOUR WIFI SSID HERE";     // WiFi
 char pass[] = "XXXXXXXXXX"; 
 char rbuf[BUFSIZE];
 char wbuf[BUFSIZE];
@@ -48,7 +48,7 @@ long  BatLvl =0;
 long  WifiAtt=0;
 
 int   gyroResult[3], accelResult[3];  // Gyro/Accel; static accelerometer's biases measured on fixed drone with engines off 
-float biasGyroX=0, biasGyroY=0, biasGyroZ=0, biasAccelX=0, biasAccelY=0, biasAccelZ=0;      // accel x=20, z=-13
+float biasGyroX=0, biasGyroY=0, biasGyroZ=0;
 float pitchGyro;
 float pitchAccel;
 float rollGyro;
@@ -57,8 +57,8 @@ float pitchGyroDelta;
 float rollGyroDelta;
 float pitchGyroRate;
 float rollGyroRate;
-float pitchError=1.18;//0.34;   // Static accelerometer's errors
-float rollError=1.5;//3.99;   // due to not ideal IMU 6DOF chip position on the drone
+float pitchError=1.18;//0.34;   // Static accelerometer's readings on the flat horizontal surface
+float rollError=1.5;//3.99;     // i.e. errors due to not ideal IMU 6DOF chip position on the drone
 float Rad=0.01745;
 
 float     Kp=0;      // PID
@@ -198,8 +198,8 @@ void loop()
   timeStepS=timeStep/1000.0;
   prevlooptime=millis();    
   getAccelerometerReadings(accelResult);
-  pitchAccel =atan2((accelResult[1] - biasAccelY) / 256.0, (accelResult[2] - biasAccelZ) / 256.0) * 360.0 / (2*PI) - pitchError; // убери biasAccel?????????????
-  rollAccel  =atan2((accelResult[0] - biasAccelX) / 256.0, (accelResult[2] - biasAccelZ) / 256.0) * 360.0 / (2*PI) - rollError;
+  pitchAccel =atan2(accelResult[1] / 256.0,accelResult[2] / 256.0) * 360.0 / (2*PI) - pitchError;
+  rollAccel  =atan2(accelResult[0] / 256.0,accelResult[2] / 256.0) * 360.0 / (2*PI) - rollError;
 
    pitchGyroRate=(gyroResult[0] - biasGyroX) / 14.375;
     rollGyroRate=(gyroResult[1] - biasGyroY) / 14.375;
@@ -260,8 +260,8 @@ void loop()
   }
   else
   {
-    cPitch=(cPitch>MAX_TILT_ANGLE)?MAX_TILT_ANGLE:cPitch;
-    cRoll = (cRoll>MAX_TILT_ANGLE)?MAX_TILT_ANGLE:cRoll;    
+    cPitch=(abs(cPitch)>MAX_TILT_ANGLE)?((abs(cPitch)/cPitch)*MAX_TILT_ANGLE):cPitch;
+    cRoll = (abs(cRoll)>MAX_TILT_ANGLE)?((abs(cRoll) /cRoll) *MAX_TILT_ANGLE):cRoll;
   }
   
   // Emergency descent mode in case of comm loss
